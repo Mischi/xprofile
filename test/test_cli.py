@@ -26,6 +26,35 @@ def test_create_new_profile(Popen):
 
 
 @patch('xprofile.xrandr.Popen')
+def test_create_two_new_profiles(Popen):
+    with open('test/docked.txt', 'rb') as file1:
+        xrandr_stdout1 = file1.read()
+
+    with open('test/laptop.txt', 'rb') as file2:
+        xrandr_stdout2 = file2.read()
+
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        Popen.return_value.communicate.return_value = (xrandr_stdout1, None)
+        Popen.return_value.wait.return_value = 0
+
+        retval = main(['--config', tmpfile.name, 'create', 'testprofile1'])
+
+        assert retval == 0
+        assert Popen.called
+        assert Popen.call_args[0][0] == [xrandr_bin, '--verbose']
+
+
+        Popen.return_value.communicate.return_value = (xrandr_stdout2, None)
+        Popen.return_value.wait.return_value = 0
+
+        retval = main(['--config', tmpfile.name, 'create', 'testprofile2'])
+
+        assert retval == 0
+        assert Popen.called
+        assert Popen.call_args[0][0] == [xrandr_bin, '--verbose']
+
+
+@patch('xprofile.xrandr.Popen')
 def test_create_new_profile_dryrun(Popen):
     with open('test/docked.txt', 'rb') as file:
         xrandr_stdout = file.read()
